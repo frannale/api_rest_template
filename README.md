@@ -1,6 +1,6 @@
 # API REST TEMPLATE
 
-SE REQUIERE XAMPP 7.4
+SE REQUIERE > XAMPP 7.4 
 
 - clonar repositorio
 
@@ -8,8 +8,8 @@ SE REQUIERE XAMPP 7.4
 
 - configurar archivo C:\xampp7.4\apache\conf\extra\httpd-vhosts
 
-Esto configura en la url 127.0.0.1:80 para levantar nuestro servidor, autorizando las peticciones HTTP con authorization. 
-
+Esto configura en la url 127.0.0.1:80 para levantar nuestro servidor local, autorizando las peticciones HTTP con authorization header. 
+```
 <VirtualHost 127.0.0.1:80>
     DocumentRoot "C:/xampp7.4/htdocs/DEV/public"
     DirectoryIndex index.php
@@ -23,7 +23,7 @@ Esto configura en la url 127.0.0.1:80 para levantar nuestro servidor, autorizand
     </Directory>
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 </VirtualHost>
-
+```
 - Para ver la documentacion y ver como interactuar con la API : 127.0.0.1/api/doc 
 
 
