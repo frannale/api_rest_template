@@ -12,6 +12,7 @@
  */
 
 namespace App\Entity;
+adasdsad
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
