@@ -5,14 +5,13 @@
  * User Entity
  *
  * @category   Entity
- * @package    MyKanban
- * @author     Francisco Ugalde
- * @copyright  2018 www.franciscougalde.com
+ * @package    Reintegra
+ * @author     open source
+ * @copyright  none 
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  */
 
 namespace App\Entity;
-adasdsad
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
