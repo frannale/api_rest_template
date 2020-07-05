@@ -133,7 +133,7 @@ class UserController extends FOSRestController
             $password = $request->request->get('_password');
             
             // CHEQUEO SI EXISTE EL USERNAME
-            $check_username = $em->getRepository("App:User")->findBy([ "username" => $username ]);
+            $check_username = $em->getRepository("App:User")->findBy([ "username" => $username ] );
             if( $check_username != [])
                 throw new Exception($username .' no esta disponible, intente con otro!');
             
@@ -213,7 +213,7 @@ class UserController extends FOSRestController
 
     /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
     /**
-     * @Rest\Get("/v1/user/{id}.{_format}", name="user_id", defaults={"_format":"json"})
+     * @Rest\Get("/v1/users/{id}.{_format}", name="user_id", defaults={"_format":"json"})
      *
      * @SWG\Response(
      *     response=200,
@@ -267,5 +267,56 @@ class UserController extends FOSRestController
 
         return new Response($serializer->serialize($response, "json"));
     }
+
+    /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
+    /**
+     * @Rest\Get("/v1/users", name="all_user", defaults={"_format":"json"})
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Informacion de los usuarioa."
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="Error al consultar usuarios."
+     * )
+     *
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function getAllUsers(Request $request) {
+        $serializer = $this->get('jms_serializer');
+        $em = $this->getDoctrine()->getManager();
+        $user = [];
+        $message = "";
+
+        try {
+            $code = 200;
+            $error = false;
+
+            $user = $em->getRepository("App:User")->findAll();
+            
+            // var_dump($serializer->serialize($user, "json"));
+            if (is_null($user)) {
+                throw new Exception('No se encontro al usuario');
+            }
+
+        } catch (Exception $ex) {
+            $code = 500;
+            $error = true;
+            $message = "{$ex->getMessage()}";
+        }
+
+        $response = [
+            'code' => $code,
+            'error' => $error,
+            'data' => $code == 200 ? $user : $message,
+        ];
+
+        return new Response($serializer->serialize($response, "json"));
+    }
+
+
 
 }
