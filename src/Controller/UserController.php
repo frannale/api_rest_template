@@ -131,10 +131,10 @@ class UserController extends FOSRestController
             $email = $request->request->get('_email');
             $username = $request->request->get('_username');
             $password = $request->request->get('_password');
-
+            
             // CHEQUEO SI EXISTE EL USERNAME
             $check_username = $em->getRepository("App:User")->findBy([ "username" => $username ]);
-            if( isset($check_username))
+            if( $check_username != [])
                 throw new Exception($username .' no esta disponible, intente con otro!');
             
             $user = new User();
@@ -249,7 +249,7 @@ class UserController extends FOSRestController
             $user = $em->getRepository("App:User")->findBy([
                 "id" => $userId,
             ]);
-            if ( $user === [] ) {
+            if ( $user == [] ) {
                 throw new Exception('No se encontro al usuario');
             }
 
