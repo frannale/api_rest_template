@@ -5,15 +5,16 @@
  * API Controller
  *
  * @category   Controller
- * @package    MyKanban
- * @author     Francisco Ugalde
- * @copyright  2018 www.franciscougalde.com
+ * @package    Reintegra
+ * @author     Reintegra Team
+ * @copyright  2020 open source
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  */
 
 namespace App\Controller;
 
-use App\Entity\User;
+use App\Entity\User as User;
+use App\Service\UserService as userService;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use Symfony\Component\Config\Definition\Exception\Exception;
@@ -30,8 +31,13 @@ use Swagger\Annotations as SWG;
  *
  * @Route("/api")
  */
-class UserController extends FOSRestController
-{
+class UserController extends AppController {
+    private $userService;
+    
+    public function __construct(userService $userService) {
+        $this->userService = $userService;
+    }   
+
     // USER URI's
     /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
     /**
@@ -116,52 +122,10 @@ class UserController extends FOSRestController
      *
      * @SWG\Tag(name="User")
      */
-    public function registerAction(Request $request, UserPasswordEncoderInterface $encoder) {
-        $serializer = $this->get('jms_serializer');
-        $em = $this->getDoctrine()->getManager();
+    public function registerAction(Request $request){
 
-        $user = [];
-        $message = "";
-        // HACER REFACTORING PARA RESPUESTA Y ESTADO GENERICA
-        try {
-            $code = 200;
-            $error = false;
-
-            $name = $request->request->get('_name');
-            $email = $request->request->get('_email');
-            $username = $request->request->get('_username');
-            $password = $request->request->get('_password');
-            
-            // CHEQUEO SI EXISTE EL USERNAME
-            $check_username = $em->getRepository("App:User")->findBy([ "username" => $username ] );
-            if( $check_username != []){
-				 var_dump($serializer->serialize($username, "json"));
-                throw new Exception($username .' no esta disponible, intente con otro!');
-            }
-            $user = new User();
-            $user->setName($name);
-            $user->setEmail($email);
-            $user->setUsername($username);
-            $user->setPlainPassword($password);
-            $user->setPassword($encoder->encodePassword($user, $password));
-
-            $em->persist($user);
-            $em->flush();
-
-        } catch (Exception $ex) {
-            $code = 500;
-            $error = true;
-			 var_dump($serializer->serialize($username, "json"));
-            $message = " {$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $user : $message,
-        ];
-
-        return new Response($serializer->serialize($response, "json"));
+        $parms = $request->request->all();
+        return $this->ejecutarContenido([$this->userService, 'new'],$parms);
     }
 
     
@@ -182,36 +146,10 @@ class UserController extends FOSRestController
      *
      * @SWG\Tag(name="User")
      */
-    public function getMyself(Request $request) {
-        $serializer = $this->get('jms_serializer');
-        $em = $this->getDoctrine()->getManager();
-        $user = [];
-        $message = "";
+    public function myself(Request $request) {
 
-        try {
-            $code = 200;
-            $error = false;
-
-            $user = $this->getUser();
-            if (is_null($user)) {
-                throw new Exception('No se encontro al usuario');
-            }
-
-        } catch (Exception $ex) {
-            $code = 500;
-            $error = true;
-            $message = "{$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $user : $message,
-        ];
-
-        return new Response($serializer->serialize($response, "json"));
+        return $this->ejecutarContenido([$this->userService, 'show'],$this->getUser());
     }
-
 
     /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
     /**
@@ -236,38 +174,9 @@ class UserController extends FOSRestController
      *
      * @SWG\Tag(name="User")
      */
-    public function getUserById(Request $request,$id) {
-        $serializer = $this->get('jms_serializer');
-        $em = $this->getDoctrine()->getManager();
-        $user = [];
-        $message = "";
-        
-        try {
-            $code = 200;
-            $error = false;
-            $userId = $id;
-            
-            
-            $user = $em->getRepository("App:User")->findBy([
-                "id" => $userId,
-            ]);
-            if ( $user == [] ) {
-                throw new Exception('No se encontro al usuario');
-            }
+    public function show(User $user )  {
 
-        } catch (Exception $ex) {
-            $code = 500;
-            $error = true;
-            $message = "{$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $user : $message,
-        ];
-
-        return new Response($serializer->serialize($response, "json"));
+        return $this->ejecutarContenido([$this->userService, 'show'],$user);
     }
 
     /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
@@ -287,41 +196,15 @@ class UserController extends FOSRestController
      *
      * @SWG\Tag(name="User")
      */
-    public function getAllUsers(Request $request) {
-        $serializer = $this->get('jms_serializer');
-        $em = $this->getDoctrine()->getManager();
-        $user = [];
-        $message = "";
-
-        try {
-            $code = 200;
-            $error = false;
-
-            $user = $em->getRepository("App:User")->findAll();
-            
-            // var_dump($serializer->serialize($user, "json"));
-            if (is_null($user)) {
-                throw new Exception('No se encontro al usuario');
-            }
-
-        } catch (Exception $ex) {
-            $code = 500;
-            $error = true;
-            $message = "{$ex->getMessage()}";
-        }
-
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $user : $message,
-        ];
-
-        return new Response($serializer->serialize($response, "json"));
+    public function all(Request $request) {
+       
+        $parms = $request->request->all();
+        return $this->ejecutarContenido([$this->userService, 'all'],$parms);
     }
 
 	
 	 /**
-     * @Rest\Put("/v1/edit/{id}", name="user_edit", defaults={"_format":"json"})
+     * @Rest\Put("/v1/users/{id}", name="user_edit", defaults={"_format":"json"})
      *
      * @SWG\Response(
      *     response=200,
@@ -372,84 +255,40 @@ class UserController extends FOSRestController
      * )
      * @SWG\Tag(name="User")
      */
-	public function editusers(Request $request, $id, UserPasswordEncoderInterface $encoder) {
-        $serializer = $this->get('jms_serializer');
-        $em = $this->getDoctrine()->getManager();
-        $user = [];
-		$useractivo = [];
-        $message = "";
-		
-	 try {
-            $code = 200;
-            $error = false;
-			$name = $request->request->get('_name');
-            $email = $request->request->get('_email');
-            $username = $request->request->get('_username');
-            $password = $request->request->get('_password');
-			$user = $em->getRepository("App:user")->find($id);
-	        $useractivo = $this->getUser();
-		  //compara si el usuario que se quiere editar es el que esta logueado
-		  if (!is_null($user) &&  ($user==$useractivo)   ) {
-			  //if($user==$useractivo)
-			  //{
-                if (!is_null($name)) {
-                    $user->setName($name);
-                }
-
-                if (!is_null($email)) {
-                    $user->setEmail($email);
-                }
-
-                if (!is_null($password)) {
-                    $user->setPassword($encoder->encodePassword($user, $password));
-                }
-
-                if (!is_null($username)) {
-                    $user->setUsername($username);
-                }
-
-                $em->persist($user);
-                $em->flush();
-			  //}
-            }
-			else {
-                $code = 500;
-                $error = true;
-                $message = "An error has occurred trying to edit the current task - Error: The task id does not exist";
-				}
-
-        } catch (Exception $ex) {
-            $code = 500;
-            $error = true;
-            $message = "An error has occurred trying to edit the current task - Error: {$ex->getMessage()}";
-								}
- var_dump($serializer->serialize($username, "json"));
-        $response = [
-            'code' => $code,
-            'error' => $error,
-            'data' => $code == 200 ? $user : $message,
-					];
-
-        return new Response($serializer->serialize($response, "json"));
+	public function edit(Request $request, User $user) {
+        
+        $parms = $request->request->all();
+        $parms['user'] = $user;
+        $parms['logged_user'] = $this->getUser();
+        return $this->ejecutarContenido([$this->userService, 'edit'],$parms);
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    
+    /*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */ 
+    /**
+     * @Rest\Delete("/v1/users/{id}.{_format}", name="user_id", defaults={"_format":"json"})
+     *
+     * @SWG\Response(
+     *     response=200,
+     *     description="Se retorno el usuario exitosamente."
+     * )
+     *
+     * @SWG\Response(
+     *     response=500,
+     *     description="No se encontro al usuario ."
+     * )
+     *
+     * @SWG\Parameter(
+     *     name="id",
+     *     in="path",
+     *     type="string",
+     *     description="ID del usuario "
+     * )
+     *
+     * @SWG\Tag(name="User")
+     */
+    public function delete(User $user )  {
 
+        return $this->ejecutarContenido([$this->userService, 'delete'],$user);
+    }
 
 }
